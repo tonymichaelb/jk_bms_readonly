@@ -12,6 +12,7 @@ document.head.append(configCss);
 const configState = document.getElementById('config-state');
 const configFields = document.getElementById('config-fields');
 const configNavButton = document.querySelector('nav button[data-view="config-view"]');
+const localUnlockState = { unlocked: false };
 const modal = document.createElement('div');
 modal.className = 'config-modal';
 modal.hidden = true;
@@ -31,6 +32,35 @@ document.body.append(modal);
 
 const input = () => document.getElementById('local-password');
 const errorBox = () => document.getElementById('config-error');
+
+function updateConfigSummary() {
+  const summaryBlocks = document.querySelectorAll('.config-groups b');
+  summaryBlocks.forEach((node) => {
+    node.textContent = localUnlockState.unlocked ? 'VISUALIZAÇÃO LOCAL' : 'BLOQUEADO';
+    node.style.color = localUnlockState.unlocked ? '#48dc92' : '#ffca64';
+  });
+
+  if (configState) {
+    configState.textContent = localUnlockState.unlocked
+      ? 'Interface local desbloqueada. Leitura, autenticação e escrita BLE continuam bloqueadas.'
+      : 'Acesso local bloqueado. A autenticação BLE real continua indisponível.';
+    configState.classList.toggle('local-unlocked', localUnlockState.unlocked);
+  }
+}
+
+function renderConfigFields(settings) {
+  const availableSettings = Array.isArray(settings) && settings.length ? settings : [];
+  if (!configFields) return;
+
+  configFields.innerHTML = availableSettings.map((setting) => {
+    const display = localUnlockState.unlocked ? 'Visualização local' : (setting.status || 'Indisponível');
+    return `<p>${setting.name}<b>${display}</b></p>`;
+  }).join('');
+
+  if (!availableSettings.length) {
+    configFields.textContent = 'Não foi possível carregar a lista local de campos planejados.';
+  }
+}
 
 function openConfigPassword() {
   const field = input();
@@ -62,15 +92,22 @@ modal.querySelector('form').addEventListener('submit', (event) => {
     return;
   }
 
+  localUnlockState.unlocked = true;
   modal.hidden = true;
-  configState.textContent = 'Interface local desbloqueada. Leitura, autenticação e escrita BLE continuam bloqueadas.';
-  configState.classList.add('local-unlocked');
+  updateConfigSummary();
+  renderConfigFields(window.__configSettings || []);
   field.value = '';
 });
 
 fetch('/api/config/settings').then((response) => response.json()).then((data) => {
   const settings = Array.isArray(data && data.settings) ? data.settings : [];
-  configFields.innerHTML = settings.map((setting) => `<p>${setting.name}<b>${setting.status}</b></p>`).join('');
+  window.__configSettings = settings;
+  renderConfigFields(settings);
+  updateConfigSummary();
 }).catch(() => {
-  configFields.textContent = 'Não foi possível carregar a lista local de campos planejados.';
+  window.__configSettings = [];
+  renderConfigFields([]);
+  updateConfigSummary();
 });
+
+updateConfigSummary();
