@@ -1,1 +1,74 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JK BMS Monitor</title><link rel="stylesheet" href="/static/style.css"></head><body><div class="layout"><aside><div class="logo">▣ <b>JK BMS Monitor</b><small>Raspberry Pi • Monitoramento em Tempo Real</small></div><nav><button class="active" data-view="overview">⌂ Visão Geral</button><button data-view="cells-view">▦ Células</button><button data-view="temps-view">♨ Temperatura</button><button data-view="charts-view">⌁ Gráficos</button><button data-view="bluetooth-view">⌁ Bluetooth</button><button data-view="about-view">ⓘ Sobre</button></nav><div class="side-info"><b id="model-side">JK-BD4A20S4P</b><span>17S • Read Only</span><small id="ble-name">BLE: --</small></div></aside><main><header><div><h1>JK BMS Monitor</h1><p id="identity">Aguardando identificação…</p></div><div class="top-status"><span id="demo" hidden>DEMO</span><b id="connection" class="offline">● OFFLINE</b><small id="updated">Sem dados</small></div></header><section class="view active" id="overview"><div class="top-cards"><article class="card soc"><span>Estado da Bateria</span><strong id="soc">--</strong><small>SOC</small></article><article class="card pack"><span>⚡ TENSÃO TOTAL</span><strong id="pack">--</strong><small>Pack 17S</small></article><article class="card"><span>Corrente</span><strong>N/D</strong><small>Não disponível</small></article><article class="card"><span>Potência</span><strong>N/D</strong><small>Não disponível</small></article><article class="card health"><span>Estado Geral</span><strong>✓</strong><small>Dados monitorados</small></article></div><section class="row"><article class="card cells-panel"><div class="title"><h2>Tensão das Células</h2><span id="minmax">MAX -- · MIN --</span></div><div id="cells" class="cell-grid"></div><footer-cells>Delta: <b id="delta">--</b> · Soma: <b id="cell-sum">--</b> · <span id="cell-count">--</span></footer-cells></article><article class="card temperatures"><h2>Temperaturas</h2><p>◉ Temperatura 1 <b id="t1">--</b></p><p>◉ Temperatura 2 <b id="t2">--</b></p><hr><p>Balanceamento <b>N/D</b></p></article></section><section class="lower cards3"><article class="card"><h2>Informações da Bateria</h2><p>Capacidade <b id="capacity">--</b></p><p>SOH <b id="soh">--</b></p></article><article class="card"><h2>Status do Sistema</h2><p id="ble-status">● BLE desconectado</p><p id="response-status">● Aguardando dados</p><p id="data-status">● Sem atualização</p></article><article class="card"><h2>Alarmes e Alertas</h2><p>Alarmes <b>N/D</b></p><p>Estados <b>N/D</b></p></article></section></section><section class="view" id="cells-view"><article class="card cells-panel"><div class="title"><h2>Todas as Células</h2><span id="minmax-2">Dados em tempo real</span></div><div id="cells-large" class="cell-grid large"></div></article></section><section class="view" id="temps-view"><div class="top-cards"><article class="card"><span>TEMP 1</span><strong id="t1-large">--</strong></article><article class="card"><span>TEMP 2</span><strong id="t2-large">--</strong></article><article class="card"><span>Balanceamento</span><strong>N/D</strong></article></div></section><section class="view" id="charts-view"><section class="lower cards3"><article class="card chart"><h2>Tensão Total</h2><canvas id="pack-chart" width="700" height="210"></canvas></article><article class="card chart"><h2>Temperaturas</h2><canvas id="temperature-chart" width="700" height="210"></canvas></article><article class="card chart"><h2>Células</h2><canvas id="cells-chart" width="700" height="210"></canvas></article></section></section><section class="view" id="bluetooth-view"><article class="card bluetooth"><div class="title"><h2>Dispositivos Bluetooth BLE</h2><button id="scan">Procurar dispositivos BLE</button></div><p id="scan-message">Selecione manualmente um dispositivo para conectar.</p><div id="devices"></div></article></section><section class="view" id="about-view"><article class="card details"><h2>Sobre o Monitor</h2><p>Modelo <b id="model">--</b></p><p>Firmware <b id="firmware">--</b></p><p>ID <b id="device-id">--</b></p><p>Modo <b>READ ONLY</b></p></article></section><footer class="page-footer">JK BMS Monitor • Read Only <span>Dados não confirmados são exibidos como N/D</span></footer></main></div><script src="/static/app.js"></script><script src="/static/scanner.js"></script><script src="/static/navigation.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JK BMS Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="logo">▣ <b>JK BMS Monitor</b><small>Raspberry Pi • Monitoramento em Tempo Real</small></div>
+      <nav aria-label="Navegação principal">
+        <button class="active" data-view="overview">⌂ Visão Geral</button>
+        <button data-view="cells-view">▦ Células</button>
+        <button data-view="temps-view">♨ Temperatura</button>
+        <button data-view="charts-view">⌁ Gráficos</button>
+        <button data-view="bluetooth-view">⌁ Bluetooth</button>
+        <button data-view="config-view">⚙ Configurações</button>
+        <button data-view="about-view">ⓘ Sobre</button>
+      </nav>
+      <div class="side-info"><b id="model-side">JK-BD4A20S4P</b><span>17S • Read Only</span><small id="ble-name">BLE: --</small></div>
+    </aside>
+    <main>
+      <header>
+        <div><h1>JK BMS Monitor</h1><p id="identity">Aguardando identificação…</p></div>
+        <div class="top-status"><span id="demo" hidden>DEMO</span><b id="connection" class="offline">● OFFLINE</b><small id="updated">Sem dados</small></div>
+      </header>
+
+      <section class="view active" id="overview">
+        <div class="top-cards">
+          <article class="card soc"><span>Estado da Bateria</span><strong id="soc">--</strong><small>SOC</small></article>
+          <article class="card pack"><span>⚡ TENSÃO TOTAL</span><strong id="pack">--</strong><small>Pack 17S</small></article>
+          <article class="card"><span>Corrente</span><strong>N/D</strong><small>Não disponível</small></article>
+          <article class="card"><span>Potência</span><strong>N/D</strong><small>Não disponível</small></article>
+          <article class="card health"><span>Estado Geral</span><strong>✓</strong><small>Dados monitorados</small></article>
+        </div>
+        <section class="row">
+          <article class="card cells-panel"><div class="title"><h2>Tensão das Células</h2><span id="minmax">MAX -- · MIN --</span></div><div id="cells" class="cell-grid"></div><footer-cells>Delta: <b id="delta">--</b> · Soma: <b id="cell-sum">--</b> · <span id="cell-count">--</span></footer-cells></article>
+          <article class="card temperatures"><h2>Temperaturas</h2><p>◉ Temperatura 1 <b id="t1">--</b></p><p>◉ Temperatura 2 <b id="t2">--</b></p><hr><p>Balanceamento <b>N/D</b></p></article>
+        </section>
+        <section class="lower cards3"><article class="card"><h2>Informações da Bateria</h2><p>Capacidade <b id="capacity">--</b></p><p>SOH <b id="soh">--</b></p></article><article class="card"><h2>Status do Sistema</h2><p id="ble-status">● BLE desconectado</p><p id="response-status">● Aguardando dados</p><p id="data-status">● Sem atualização</p></article><article class="card"><h2>Alarmes e Alertas</h2><p>Alarmes <b>N/D</b></p><p>Estados <b>N/D</b></p></article></section>
+      </section>
+
+      <section class="view" id="cells-view"><article class="card cells-panel"><div class="title"><h2>Todas as Células</h2><span id="minmax-2">Dados em tempo real</span></div><div id="cells-large" class="cell-grid large"></div></article></section>
+      <section class="view" id="temps-view"><div class="top-cards"><article class="card"><span>TEMP 1</span><strong id="t1-large">--</strong></article><article class="card"><span>TEMP 2</span><strong id="t2-large">--</strong></article><article class="card"><span>Balanceamento</span><strong>N/D</strong></article></div></section>
+      <section class="view" id="charts-view"><section class="lower cards3"><article class="card chart"><h2>Tensão Total</h2><canvas id="pack-chart" width="700" height="210"></canvas></article><article class="card chart"><h2>Temperaturas</h2><canvas id="temperature-chart" width="700" height="210"></canvas></article><article class="card chart"><h2>Células</h2><canvas id="cells-chart" width="700" height="210"></canvas></article></section></section>
+      <section class="view" id="bluetooth-view"><article class="card bluetooth"><div class="title"><h2>Dispositivos Bluetooth BLE</h2><button id="scan">Procurar dispositivos BLE</button></div><p id="scan-message">Selecione manualmente um dispositivo para conectar.</p><div id="devices"></div></article></section>
+
+      <section class="view" id="config-view">
+        <article class="card">
+          <h2>Configurações do BMS</h2>
+          <p id="config-state">Acesso local bloqueado. A autenticação BLE real continua indisponível.</p>
+          <div class="config-groups">
+            <article><h3>Proteções</h3><p>Tensão, temperatura e limites de corrente.</p><b>BLOQUEADO</b></article>
+            <article><h3>Balanceamento</h3><p>Limites e critérios de balanceamento.</p><b>BLOQUEADO</b></article>
+            <article><h3>Capacidade</h3><p>Capacidade nominal e número de células.</p><b>BLOQUEADO</b></article>
+            <article><h3>MOSFETs</h3><p>Estados de carga e descarga.</p><b>BLOQUEADO</b></article>
+          </div>
+          <p>Os campos abaixo são planejados. Nenhum valor é lido, alterado ou enviado à BMS.</p>
+          <div id="config-fields" class="config-fields"></div>
+        </article>
+      </section>
+
+      <section class="view" id="about-view"><article class="card details"><h2>Sobre o Monitor</h2><p>Modelo <b id="model">--</b></p><p>Firmware <b id="firmware">--</b></p><p>ID <b id="device-id">--</b></p><p>Modo <b>READ ONLY</b></p></article></section>
+      <footer class="page-footer">JK BMS Monitor • Read Only <span>Dados não confirmados são exibidos como N/D</span></footer>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+  <script src="/static/scanner.js"></script>
+  <script src="/static/navigation.js"></script>
+  <script src="/static/config.js"></script>
+</body>
+</html>
