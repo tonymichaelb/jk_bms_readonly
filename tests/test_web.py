@@ -19,3 +19,8 @@ def test_api_routes_and_disconnected_state():
     with TestClient(app) as client:
         for route in ('/','/api/status','/api/cells','/api/temperatures','/api/connection','/api/history'):
             assert client.get(route).status_code==200
+
+def test_demo_disables_ble_scan_and_rejects_connection():
+    with TestClient(create_app(demo=True)) as client:
+        assert client.get('/api/ble/scan').json()['devices'] == []
+        assert client.post('/api/ble/connect', json={'address':'any'}).json()['ok'] is False

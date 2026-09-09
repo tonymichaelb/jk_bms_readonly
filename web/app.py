@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from jk_bms_protocol import read_hex_frames
 from web.bms_service import BmsService
 from web.live_reader import run_live
+from web.ble_manager import BleManager
 
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent
@@ -26,14 +27,16 @@ def create_app(demo: bool = False, enable_ble: bool = True) -> FastAPI:
     service = BmsService(demo=demo)
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        task = asyncio.create_task(run_demo(service) if demo else run_live(service)) if enable_ble else None
+        task = asyncio.create_task(run_demo(service)) if demo and enable_ble else None
         yield
         if task is not None:
             task.cancel()
             try: await task
             except asyncio.CancelledError: pass
+        if hasattr(app.state, "ble_manager"): await app.state.ble_manager.disconnect()
     app = FastAPI(title="JK BMS Monitor", lifespan=lifespan)
     app.state.service = service
+    app.state.ble_manager = BleManager(service)
     app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
     @app.get("/")
     async def index(): return FileResponse(ROOT / "templates/index.html")
@@ -50,6 +53,18 @@ def create_app(demo: bool = False, enable_ble: bool = True) -> FastAPI:
         s=service.snapshot(); return {key:s[key] for key in ("connected","demo","ble_name","updated_at")}
     @app.get("/api/history")
     async def history(): return list(service.history)
+    @app.get("/api/ble/scan")
+    async def ble_scan(): return {"devices": [] if demo else await app.state.ble_manager.scan(), "error":app.state.ble_manager.error}
+    @app.post("/api/ble/connect")
+    async def ble_connect(payload: dict):
+        if demo: return {"ok":False,"error":"BLE indisponível no modo demonstração"}
+        address=payload.get("address")
+        if not address: return {"ok":False,"error":"address é obrigatório"}
+        await app.state.ble_manager.connect(address,payload.get("name")); return {"ok":True}
+    @app.post("/api/ble/disconnect")
+    async def ble_disconnect(): await app.state.ble_manager.disconnect(); return {"ok":True}
+    @app.get("/api/ble/status")
+    async def ble_status(): return app.state.ble_manager.status()
     @app.websocket("/ws")
     async def websocket(socket: WebSocket):
         await socket.accept(); queue=service.subscribe()

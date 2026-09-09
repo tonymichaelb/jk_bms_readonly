@@ -33,6 +33,23 @@ No Raspberry Pi, instale as mesmas dependências e abra `http://IP_DO_RASPBERRY:
 - `GET /api/history`
 - `GET /ws` (WebSocket)
 
+## Bluetooth manual (modo REAL)
+
+Abra a seção **Bluetooth**, escolha **Procurar dispositivos BLE** e clique em
+**Conectar** somente no dispositivo desejado. O scanner mostra nome, endereço,
+RSSI quando disponível e uma indicação de possível JK BMS pelo serviço FFE0 ou
+nome. Não há conexão automática com todos os dispositivos.
+
+No Raspberry Pi, confirme o adaptador antes da execução:
+
+```bash
+bluetoothctl show
+bluetoothctl scan on
+```
+
+O leitor usa FFE0/FFE1 e somente os requests de leitura 0x97 e 0x96. Nenhum
+endpoint aceita bytes arbitrários, configurações ou comandos de controle.
+
 Campos sem confirmação — corrente, alarmes e balanceamento — são sempre `null`/“Não disponível”. O histórico fica apenas em memória (últimas 360 amostras).
 
 ## Testes
