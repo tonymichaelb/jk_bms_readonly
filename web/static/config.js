@@ -1,7 +1,76 @@
-const css=document.createElement('style');css.textContent='.config-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#000b;padding:18px}.config-modal[hidden]{display:none}.config-dialog{width:min(420px,100%);background:#102736;border:1px solid #3d7188;border-radius:13px;padding:24px;box-shadow:0 24px 80px #000}.config-dialog h2{margin:0 0 8px}.config-dialog p,.config-note{color:#bdd0da}.config-dialog input{display:block;width:100%;margin:16px 0 8px;padding:13px;background:#06151f;color:#fff;border:1px solid #4b8299;border-radius:7px;font-size:18px;letter-spacing:.15em}.config-dialog input:focus{outline:2px solid #31bce8}.config-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.config-actions button,.config-back{padding:10px 16px;border-radius:7px;border:1px solid #4b8299;background:#153a4e;color:#fff;font-weight:700;cursor:pointer}.config-actions .primary{background:#087be8}.config-error{min-height:20px;color:#ff9ba6}.config-fields p{display:flex;justify-content:space-between;border-bottom:1px solid #234555;padding:8px 0}.local-unlocked{color:#48dc92}.config-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}.config-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}.config-group{background:#071a25;border:1px solid #234555;border-radius:8px;padding:14px}.config-group h3{margin:0 0 6px;font-size:1rem}.config-group p{color:#9fb6c4;font-size:.85rem}.config-group b{display:block;margin-top:10px;color:#ffca64;font-size:.78rem}@media(max-width:600px){.config-toolbar{align-items:flex-start;flex-direction:column}}';document.head.append(css);
-const nav=document.querySelector('nav'),configButton=document.createElement('button');configButton.textContent='⚙ Configurações';configButton.dataset.view='config-view';nav.append(configButton);
-const configView=document.createElement('section');configView.id='config-view';configView.className='view';configView.innerHTML='<article class="card"><div class="config-toolbar"><div><h2>Configurações do BMS</h2><p id="config-state">Acesso local bloqueado. A autenticação BLE real continua indisponível.</p></div><button id="config-back" class="config-back" type="button">← Visão Geral</button></div><div class="config-groups"><article class="config-group"><h3>Proteções</h3><p>Tensão, temperatura e limites de corrente.</p><b>BLOQUEADO — protocolo não confirmado</b></article><article class="config-group"><h3>Balanceamento</h3><p>Limites e critérios de balanceamento.</p><b>BLOQUEADO — protocolo não confirmado</b></article><article class="config-group"><h3>Capacidade</h3><p>Capacidade nominal e contagem de células.</p><b>BLOQUEADO — protocolo não confirmado</b></article><article class="config-group"><h3>MOSFETs</h3><p>Estados de carga e descarga.</p><b>BLOQUEADO — protocolo não confirmado</b></article></div><p class="config-note">Os itens abaixo são somente uma lista de campos planejados. Nenhum valor é lido, alterado ou enviado à BMS.</p><div id="config-fields" class="config-fields"></div></article>';document.querySelector('main').insertBefore(configView,document.querySelector('.page-footer'));
-const modal=document.createElement('div');modal.className='config-modal';modal.hidden=true;modal.innerHTML='<form class="config-dialog"><h2>Configurações</h2><p>Digite a senha para liberar somente a interface local.</p><input id="local-password" type="password" autocomplete="current-password" placeholder="Senha" aria-label="Senha"><div class="config-error" id="config-error"></div><div class="config-actions"><button type="button" id="config-cancel">Cancelar</button><button class="primary" type="submit">Desbloquear</button></div></form>';document.body.append(modal);
-function activate(view,button){document.querySelectorAll('nav button').forEach(item=>item.classList.remove('active'));document.querySelectorAll('.view').forEach(item=>item.classList.remove('active'));button.classList.add('active');view.classList.add('active')}function showConfig(){activate(configView,configButton);modal.hidden=false;const input=document.getElementById('local-password');input.value='';document.getElementById('config-error').textContent='';setTimeout(()=>input.focus(),0)}configButton.onclick=showConfig;document.getElementById('config-back').onclick=()=>{const button=document.querySelector('nav button[data-view="overview"]');activate(document.getElementById('overview'),button)};document.getElementById('config-cancel').onclick=()=>modal.hidden=true;modal.querySelector('form').onsubmit=event=>{event.preventDefault();const input=document.getElementById('local-password');if(!input.value){document.getElementById('config-error').textContent='Digite uma senha para continuar.';input.focus();return}modal.hidden=true;const state=document.getElementById('config-state');state.textContent='Interface local desbloqueada. Leitura, autenticação e escrita BLE continuam bloqueadas.';state.className='local-unlocked'};
-fetch('/api/config/settings').then(response=>response.json()).then(data=>{document.getElementById('config-fields').innerHTML=data.settings.map(setting=>`<p>${setting.name}<b>${setting.status}</b></p>`).join('')}).catch(()=>{document.getElementById('config-fields').textContent='Não foi possível carregar a lista local de campos planejados.'});
-const quickConfig=document.createElement('button');quickConfig.type='button';quickConfig.textContent='⚙ Configurações';quickConfig.setAttribute('aria-label','Abrir configurações');quickConfig.style.cssText='position:fixed;right:18px;bottom:18px;z-index:9000;padding:12px 16px;border:1px solid #4b8299;border-radius:24px;background:#087be8;color:#fff;font-weight:700;box-shadow:0 8px 24px #0008;cursor:pointer';quickConfig.onclick=showConfig;document.body.append(quickConfig);
+/* Interface local de Configurações. Não navega e não envia dados por BLE. */
+const configCss = document.createElement('style');
+configCss.textContent = `
+  .config-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#000b;padding:18px}
+  .config-modal[hidden]{display:none}.config-dialog{width:min(420px,100%);background:#102736;border:1px solid #3d7188;border-radius:13px;padding:24px;box-shadow:0 24px 80px #000}
+  .config-dialog h2{margin:0 0 8px}.config-dialog p{color:#bdd0da}.config-dialog input{display:block;width:100%;margin:16px 0 8px;padding:13px;background:#06151f;color:#fff;border:1px solid #4b8299;border-radius:7px;font-size:18px;letter-spacing:.15em}
+  .config-dialog input:focus{outline:2px solid #31bce8}.config-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.config-actions button{padding:10px 16px;border-radius:7px;border:1px solid #4b8299;background:#153a4e;color:#fff;font-weight:700;cursor:pointer}.config-actions .primary{background:#087be8}
+  .config-error{min-height:20px;color:#ff9ba6}.local-unlocked{color:#48dc92}.config-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:18px 0}.config-groups article{background:#071a25;border:1px solid #234555;border-radius:8px;padding:14px}.config-groups h3{margin:0 0 6px}.config-groups p{color:#9fb6c4;font-size:.85rem}.config-groups b{color:#ffca64;font-size:.8rem}.config-fields p{display:flex;justify-content:space-between;border-bottom:1px solid #234555;padding:8px 0}
+`;
+document.head.append(configCss);
+
+const configState = document.getElementById('config-state');
+const configFields = document.getElementById('config-fields');
+const configNavButton = document.querySelector('nav button[data-view="config-view"]');
+const modal = document.createElement('div');
+modal.className = 'config-modal';
+modal.hidden = true;
+modal.innerHTML = `
+  <form class="config-dialog" novalidate>
+    <h2>Configurações</h2>
+    <p>Digite a senha para liberar somente a interface local.</p>
+    <input id="local-password" type="password" autocomplete="current-password" placeholder="Senha" aria-label="Senha">
+    <div class="config-error" id="config-error"></div>
+    <div class="config-actions">
+      <button type="button" id="config-cancel">Cancelar</button>
+      <button class="primary" type="submit">Desbloquear</button>
+    </div>
+  </form>
+`;
+document.body.append(modal);
+
+const input = () => document.getElementById('local-password');
+const errorBox = () => document.getElementById('config-error');
+
+function openConfigPassword() {
+  const field = input();
+  if (!field) return;
+  field.value = '';
+  errorBox().textContent = '';
+  modal.hidden = false;
+  setTimeout(() => field.focus(), 0);
+}
+
+function closeConfigPassword() {
+  modal.hidden = true;
+  const field = input();
+  if (field) field.value = '';
+  errorBox().textContent = '';
+}
+
+if (configNavButton) {
+  configNavButton.addEventListener('click', openConfigPassword);
+}
+
+modal.querySelector('#config-cancel').addEventListener('click', closeConfigPassword);
+modal.querySelector('form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const field = input();
+  if (!field.value) {
+    errorBox().textContent = 'Digite uma senha para continuar.';
+    field.focus();
+    return;
+  }
+
+  modal.hidden = true;
+  configState.textContent = 'Interface local desbloqueada. Leitura, autenticação e escrita BLE continuam bloqueadas.';
+  configState.classList.add('local-unlocked');
+  field.value = '';
+});
+
+fetch('/api/config/settings').then((response) => response.json()).then((data) => {
+  const settings = Array.isArray(data && data.settings) ? data.settings : [];
+  configFields.innerHTML = settings.map((setting) => `<p>${setting.name}<b>${setting.status}</b></p>`).join('');
+}).catch(() => {
+  configFields.textContent = 'Não foi possível carregar a lista local de campos planejados.';
+});
