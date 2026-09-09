@@ -10,6 +10,7 @@ from jk_bms_protocol import read_hex_frames
 from web.bms_service import BmsService
 from web.live_reader import run_live
 from web.ble_manager import BleManager
+from web.config_service import ConfigService
 
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT.parent
@@ -37,6 +38,7 @@ def create_app(demo: bool = False, enable_ble: bool = True) -> FastAPI:
     app = FastAPI(title="JK BMS Monitor", lifespan=lifespan)
     app.state.service = service
     app.state.ble_manager = BleManager(service)
+    app.state.config_service = ConfigService()
     app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
     @app.get("/")
     async def index(): return FileResponse(ROOT / "templates/index.html")
@@ -65,6 +67,16 @@ def create_app(demo: bool = False, enable_ble: bool = True) -> FastAPI:
     async def ble_disconnect(): await app.state.ble_manager.disconnect(); return {"ok":True}
     @app.get("/api/ble/status")
     async def ble_status(): return app.state.ble_manager.status()
+    @app.get("/api/config/status")
+    async def config_status(): return app.state.config_service.status()
+    @app.get("/api/config/settings")
+    async def config_settings(): return app.state.config_service.settings()
+    @app.post("/api/config/read")
+    async def config_read(): return app.state.config_service.blocked()
+    @app.post("/api/config/validate")
+    async def config_validate(): return app.state.config_service.blocked()
+    @app.post("/api/config/write")
+    async def config_write(): return app.state.config_service.blocked()
     @app.websocket("/ws")
     async def websocket(socket: WebSocket):
         await socket.accept(); queue=service.subscribe()

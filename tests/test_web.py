@@ -24,3 +24,8 @@ def test_demo_disables_ble_scan_and_rejects_connection():
     with TestClient(create_app(demo=True)) as client:
         assert client.get('/api/ble/scan').json()['devices'] == []
         assert client.post('/api/ble/connect', json={'address':'any'}).json()['ok'] is False
+
+def test_configuration_is_explicitly_blocked_without_official_protocol():
+    with TestClient(create_app(demo=True)) as client:
+        assert client.get('/api/config/status').json()['write_available'] is False
+        assert client.post('/api/config/write').json()['ok'] is False
